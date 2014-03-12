@@ -14,7 +14,7 @@ public class Manager : Photon.MonoBehaviour
 
     private float reconnectDelay = 0f, reconnectTime = 0f;
     private string chatMessage = "";
-    private List<string> chatMessages = new List<string>();
+    public List<string> chatMessages = new List<string> { " ", " ", " ", " ", " ", " ", " ", " ", " ", " " };
 
     void Start()
     {
@@ -46,11 +46,11 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.BeginVertical();
                 GUILayout.Box("", GUILayout.Width(380), GUILayout.Height(300));
                 GUILayout.Box("", GUILayout.Width(380), GUILayout.Height(420));
-                GUILayout.BeginArea(new Rect(910,300,380,420));
+                GUILayout.BeginArea(new Rect(910, 300, 380, 390));
                 GUILayout.BeginVertical();
-                foreach(string s in chatMessages)
+                for (int i = 0; i < chatMessages.Count; i++)
                 {
-                    GUILayout.Label(s);
+                    GUI.Label(new Rect(0, 390- i * 22-22, 380, 22), chatMessages[i]);
                 }
                 GUILayout.EndVertical();
                 GUILayout.EndArea();
@@ -72,7 +72,7 @@ public class Manager : Photon.MonoBehaviour
                     else
                     {
                         chatMessage.Trim();
-                        photonView.BroadcastMessage("Message", chatMessage + "#" + PhotonNetwork.playerName, SendMessageOptions.DontRequireReceiver);
+                        photonView.RPC("Message", PhotonTargets.All, chatMessage);
                         chatMessage = "";
                     }
                 }
@@ -103,25 +103,32 @@ public class Manager : Photon.MonoBehaviour
     void OnJoinedLobby()
     {
         StopCoroutine("Connect");
+        PhotonNetwork.JoinRandomRoom();
+    }
+
+    void OnJoinedRoom()
+    {
         guistate = "connected";
     }
 
-    void Message(string message)
+    void OnPhotonRandomJoinFailed()
+    {
+        PhotonNetwork.CreateRoom("room", true, true, 20);
+    }
+
+    void OnPhotonCreateRoomFailed()
+    {
+        PhotonNetwork.JoinRandomRoom();
+    }
+
+    [RPC]
+    void Message(string message, PhotonMessageInfo info)
     {
         message.Trim();
-        string[] s = message.Split('#');
-
-        if (chatMessages.Count >= 10)
+        for (int i = chatMessages.Count - 1; i > 0; i--)
         {
-            for (int i = 9; i < 0; i++)
-            {
-                chatMessages[i] = chatMessages[i - 1];
-            }
-            chatMessages[0] = s[0];
+            chatMessages[i] = chatMessages[i - 1];
         }
-        else
-        {
-            chatMessages.Add(s[1]+": "+s[0]);
-        }
+        chatMessages[0] = info.sender.name + ": " + message;
     }
 }

@@ -171,6 +171,17 @@ MonoBehaviour:
   guistate: connecting
   presetResolution_width: 1280
   presetResolution_height: 720
+  chatMessages:
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
 --- !u!114 &1970389227
 MonoBehaviour:
   m_ObjectHideFlags: 0
