@@ -6,7 +6,7 @@ public class Manager : Photon.MonoBehaviour
 {
     public float version = 1.0f;
     public string guistate = "connecting";
-    public bool menu = false;
+    public bool menu = false, settings = false;
     public float presetResolution_width = 1280, presetResolution_height = 720;
     public GUISkin skin;
     public Texture2D kickIcon;
@@ -88,6 +88,14 @@ public class Manager : Photon.MonoBehaviour
                         guistate = "room";
                         Message("Joined a random game", null);
                     }
+                }
+                if (GUILayout.Button("Settings"))
+                {
+                    settings = true;
+                }
+                if (GUILayout.Button("Menu"))
+                {
+                    menu = true;
                 }
                 GUILayout.EndVertical();
                 GUILayout.EndArea();

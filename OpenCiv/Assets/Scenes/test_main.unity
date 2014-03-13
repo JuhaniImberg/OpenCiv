@@ -170,6 +170,7 @@ MonoBehaviour:
   version: 1
   guistate: connecting
   menu: 0
+  settings: 0
   presetResolution_width: 1280
   presetResolution_height: 720
   skin: {fileID: 11400000, guid: d29a960f81cd1be459eedde772f6676a, type: 2}
