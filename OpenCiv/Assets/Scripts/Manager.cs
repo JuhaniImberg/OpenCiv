@@ -12,10 +12,12 @@ public class Manager : Photon.MonoBehaviour
 
     private float reconnectDelay = 0f, reconnectTime = 0f;
     private string chatMessage = "";
-    public static Stack<string> chatMessages;
+    Stack<string> chatMessages;
+    public Texture2D kickIcon;
 
     void Start()
     {
+        Application.runInBackground = true;
         chatMessages = new Stack<string>(Mathf.RoundToInt(360 / skin.customStyles[0].fontSize));
         StartCoroutine("Connect");
     }
@@ -85,11 +87,16 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.BeginArea(new Rect(0, 0, 1280, 720));
                 GUILayout.BeginHorizontal();
                 GUILayout.Box("Players", GUILayout.Width(900), GUILayout.Height(720));
-                GUILayout.BeginArea(new Rect(15,23,870,697));
+                GUILayout.BeginArea(new Rect(15, 23, 870, 697));
                 GUILayout.BeginVertical();
                 foreach (PhotonPlayer player in PhotonNetwork.playerList)
                 {
-                    GUILayout.Label(player.name);
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(player.name+(player.isMasterClient?" (host)":""));
+                    if (PhotonNetwork.isMasterClient && player != PhotonNetwork.player)
+                        if (GUILayout.Button(kickIcon, GUILayout.Width(30), GUILayout.Height(30)))
+                            photonView.RPC("Kick", player);
+                    GUILayout.EndHorizontal();
                 }
                 GUILayout.EndVertical();
                 GUILayout.EndArea();
@@ -164,5 +171,12 @@ public class Manager : Photon.MonoBehaviour
     void Message(string message, PhotonMessageInfo info)
     {
         chatMessages.Push(info.sender.name + ": " + message);
+    }
+
+    [RPC]
+    void Kick()
+    {
+        PhotonNetwork.LeaveRoom();
+        guistate = "connected";
     }
 }

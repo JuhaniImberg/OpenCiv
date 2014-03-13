@@ -25,4 +25,5 @@ MonoBehaviour:
   - OnAwakeRPC
   - DestroyRpc
   - Message
+  - Kick
   DisableAutoOpenWizard: 0

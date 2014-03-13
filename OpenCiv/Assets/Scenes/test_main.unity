@@ -173,6 +173,7 @@ MonoBehaviour:
   presetResolution_width: 1280
   presetResolution_height: 720
   skin: {fileID: 11400000, guid: d29a960f81cd1be459eedde772f6676a, type: 2}
+  kickIcon: {fileID: 2800000, guid: f2135970354210b439277120d26de078, type: 3}
 --- !u!114 &1970389227
 MonoBehaviour:
   m_ObjectHideFlags: 0
