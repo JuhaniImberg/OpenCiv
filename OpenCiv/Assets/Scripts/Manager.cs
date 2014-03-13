@@ -9,11 +9,12 @@ public class Manager : Photon.MonoBehaviour
     public bool menu = false;
     public float presetResolution_width = 1280, presetResolution_height = 720;
     public GUISkin skin;
+    public Texture2D kickIcon;
 
     private float reconnectDelay = 0f, reconnectTime = 0f;
     private string chatMessage = "";
     Stack<string> chatMessages;
-    public Texture2D kickIcon;
+    RoomInfo selectedRoom = null;
 
     void Start()
     {
@@ -48,9 +49,12 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.BeginArea(new Rect(10, 10, 900, 720));
                 if (PhotonNetwork.GetRoomList().Length > 0)
                 {
-                    foreach (RoomInfo room in PhotonNetwork.GetRoomList())
+                    RoomInfo[] rooms = PhotonNetwork.GetRoomList();
+                    int s = -1;
+                    s = GUILayout.SelectionGrid(s, CreateList(rooms), 1);
+                    if (s > -1)
                     {
-                        GUILayout.Label(room.name + " " + room.playerCount + "/" + room.maxPlayers);
+                        selectedRoom = rooms[s];
                     }
                 }
                 else
@@ -64,10 +68,17 @@ public class Manager : Photon.MonoBehaviour
                 {
                     PhotonNetwork.CreateRoom(null, true, true, 20);
                     guistate = "room";
+                    Message("Created a new game", null);
                 }
-                if (GUILayout.Button("Join game"))
+                if (selectedRoom != null)
                 {
-
+                    if (GUILayout.Button("Join game"))
+                    {
+                        PhotonNetwork.JoinRoom(selectedRoom.name);
+                        Message("Joined " + selectedRoom.name, null);
+                        selectedRoom = null;
+                        guistate = "room";
+                    }
                 }
                 if (PhotonNetwork.GetRoomList().Length > 0)
                 {
@@ -75,6 +86,7 @@ public class Manager : Photon.MonoBehaviour
                     {
                         PhotonNetwork.JoinRandomRoom();
                         guistate = "room";
+                        Message("Joined a random game", null);
                     }
                 }
                 GUILayout.EndVertical();
@@ -92,7 +104,7 @@ public class Manager : Photon.MonoBehaviour
                 foreach (PhotonPlayer player in PhotonNetwork.playerList)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(player.name+(player.isMasterClient?" (host)":""));
+                    GUILayout.Label(player.name + (player.isMasterClient ? " (host)" : ""));
                     if (PhotonNetwork.isMasterClient && player != PhotonNetwork.player)
                         if (GUILayout.Button(kickIcon, GUILayout.Width(30), GUILayout.Height(30)))
                             photonView.RPC("Kick", player);
@@ -165,12 +177,26 @@ public class Manager : Photon.MonoBehaviour
     {
         StopCoroutine("Connect");
         guistate = "connected";
+        Message("Connected to the server", null);
+    }
+
+    GUIContent[] CreateList(RoomInfo[] rooms)
+    {
+        GUIContent[] gc = new GUIContent[rooms.Length];
+        for (int i = 0; i < gc.Length; i++)
+        {
+            gc[i] = new GUIContent(rooms[i].name+new string(' ',Mathf.RoundToInt(skin.label.CalcSize(new GUIContent(rooms[i].name)).x))+rooms[i].playerCount+" / "+rooms[i].maxPlayers);
+        }
+        return gc;
     }
 
     [RPC]
     void Message(string message, PhotonMessageInfo info)
     {
-        chatMessages.Push(info.sender.name + ": " + message);
+        if (info != null)
+            chatMessages.Push(info.sender.name + ": " + message);
+        else
+            chatMessages.Push("System: " + message);
     }
 
     [RPC]
