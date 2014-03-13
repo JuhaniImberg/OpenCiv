@@ -46,12 +46,12 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.BeginArea(new Rect(0, 0, 1280, 720));
                 GUILayout.BeginHorizontal();
                 GUILayout.Box("Games", GUILayout.Width(900), GUILayout.Height(720));
-                GUILayout.BeginArea(new Rect(10, 10, 900, 720));
+                GUILayout.BeginArea(new Rect(10, 22, 880, 698));
                 if (PhotonNetwork.GetRoomList().Length > 0)
                 {
                     RoomInfo[] rooms = PhotonNetwork.GetRoomList();
                     int s = -1;
-                    s = GUILayout.SelectionGrid(s, CreateList(rooms), 1);
+                    s = GUILayout.SelectionGrid(s, CreateList(rooms), 1, GUILayout.Width(880));
                     if (s > -1)
                     {
                         selectedRoom = rooms[s];
@@ -180,12 +180,22 @@ public class Manager : Photon.MonoBehaviour
         Message("Connected to the server", null);
     }
 
+    void OnPhotonPlayerConnected(PhotonPlayer player)
+    {
+        Message(player.name + " joined.", null);
+    }
+
+    void OnPhotonPlayerDisconnected(PhotonPlayer player)
+    {
+        Message(player.name + " left.", null);
+    }
+
     GUIContent[] CreateList(RoomInfo[] rooms)
     {
         GUIContent[] gc = new GUIContent[rooms.Length];
         for (int i = 0; i < gc.Length; i++)
         {
-            gc[i] = new GUIContent(rooms[i].name+new string(' ',Mathf.RoundToInt(skin.label.CalcSize(new GUIContent(rooms[i].name)).x))+rooms[i].playerCount+" / "+rooms[i].maxPlayers);
+            gc[i] = new GUIContent(rooms[i].name/*+new string(' ',Mathf.RoundToInt(skin.label.CalcSize(new GUIContent(rooms[i].name)).x))+rooms[i].playerCount+" / "+rooms[i].maxPlayers*/);
         }
         return gc;
     }
