@@ -12,12 +12,12 @@ public class Manager : Photon.MonoBehaviour
 
     private float reconnectDelay = 0f, reconnectTime = 0f;
     private string chatMessage = "";
-    List<string> chatMessages = new List<string>(11);
+    public static Stack<string> chatMessages;
 
     void Start()
     {
+        chatMessages = new Stack<string>(Mathf.RoundToInt(360 / skin.customStyles[0].fontSize));
         StartCoroutine("Connect");
-        Debug.Log(chatMessages.Capacity);
     }
 
     void Update()
@@ -85,6 +85,14 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.BeginArea(new Rect(0, 0, 1280, 720));
                 GUILayout.BeginHorizontal();
                 GUILayout.Box("Players", GUILayout.Width(900), GUILayout.Height(720));
+                GUILayout.BeginArea(new Rect(15,23,870,697));
+                GUILayout.BeginVertical();
+                foreach (PhotonPlayer player in PhotonNetwork.playerList)
+                {
+                    GUILayout.Label(player.name);
+                }
+                GUILayout.EndVertical();
+                GUILayout.EndArea();
                 GUILayout.BeginVertical();
                 GUILayout.Box("", GUILayout.Width(380), GUILayout.Height(320));
                 GUILayout.Box("", GUILayout.Width(380), GUILayout.Height(360));
@@ -93,7 +101,7 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.BeginVertical();
                 for (int i = 0; i < chatMessages.Count; i++)
                 {
-                    GUI.Label(new Rect(0, 340 - i * skin.customStyles[0].fontSize - skin.customStyles[0].fontSize, 380, skin.customStyles[0].fontSize), chatMessages[i], skin.customStyles[0]);
+                    GUI.Label(new Rect(0, 340 - i * skin.customStyles[0].fontSize - skin.customStyles[0].fontSize, 380, skin.customStyles[0].fontSize), chatMessages.ToArray()[i], skin.customStyles[0]);
                 }
                 GUILayout.EndVertical();
                 GUILayout.EndArea();
@@ -155,30 +163,6 @@ public class Manager : Photon.MonoBehaviour
     [RPC]
     void Message(string message, PhotonMessageInfo info)
     {
-        message.Trim();
-        if (chatMessages.Count > 0)
-        {
-            if (chatMessages.Capacity >= chatMessages.Count)
-            {
-                for (int i = chatMessages.Count - 1; i > 0; i--)
-                {
-                    chatMessages[i] = chatMessages[i - 1];
-                }
-                chatMessages.Insert(0,info.sender.name + ": " + message);
-            }
-            else
-            {
-                for (int i = chatMessages.Count - 1; i > 0; i--)
-                {
-                    chatMessages[i] = chatMessages[i - 1];
-                }
-                chatMessages.RemoveAt(0);
-                chatMessages.Insert(0, info.sender.name + ": " + message);
-            }
-        }
-        else
-        {
-            chatMessages.Add(info.sender.name + ": " + message);
-        }
+        chatMessages.Push(info.sender.name + ": " + message);
     }
 }
