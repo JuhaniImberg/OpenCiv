@@ -5,11 +5,12 @@ using System.Collections.Generic;
 public class Manager : Photon.MonoBehaviour
 {
     public float version = 1.0f;
-    public string guistate = "connecting";
+    public string guistate = "name";
     public bool menu = false, settings = false;
     public float presetResolution_width = 1280, presetResolution_height = 720;
     public GUISkin skin;
     public Texture2D kickIcon;
+    public string playerName = "";
 
     private float reconnectDelay = 0f, reconnectTime = 0f;
     private string chatMessage = "";
@@ -20,7 +21,6 @@ public class Manager : Photon.MonoBehaviour
     {
         Application.runInBackground = true;
         chatMessages = new Stack<string>(Mathf.RoundToInt(360 / skin.customStyles[0].fontSize));
-        StartCoroutine("Connect");
     }
 
     void Update()
@@ -34,8 +34,71 @@ public class Manager : Photon.MonoBehaviour
         Vector3 scale = new Vector3((float)Screen.width / presetResolution_width, (float)Screen.height / presetResolution_height, 1);
         GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, scale);
 
+        if (menu)
+        {
+            GUILayout.BeginArea(new Rect(500, 110, 280, 500));
+            GUILayout.Box("Menu", GUILayout.Width(280), GUILayout.Height(500));
+            GUILayout.BeginArea(new Rect(10, 22, 260, 478));
+            GUILayout.BeginVertical();
+            if (GUILayout.Button(""))
+            {
+
+            }
+            if (GUILayout.Button(""))
+            {
+
+            }
+            if (GUILayout.Button(""))
+            {
+
+            }
+            if (GUILayout.Button(""))
+            {
+
+            }
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
+            GUILayout.EndArea();
+        }
+        if (settings)
+        {
+            GUILayout.BeginArea(new Rect(140, 110, 1000, 500));
+            GUILayout.Box("Settings", GUILayout.Width(1000), GUILayout.Height(500));
+            GUILayout.BeginArea(new Rect(10, 22, 980, 478));
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical();
+            GUILayout.Label("Username");
+            string s = playerName;
+            s = GUILayout.TextField(s, 30, GUILayout.Width(100));
+            playerName = s;
+            GUILayout.EndVertical();
+            if (GUILayout.Button("Ready!", GUILayout.Width(100)))
+            {
+                SaveSettings();
+                settings = false;
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+            GUILayout.EndArea();
+        }
+
         switch (guistate)
         {
+            case "name":
+                GUI.Box(new Rect(500,250,280,80),"Enter your name");
+                GUILayout.BeginArea(new Rect(500, 272, 280, 80));
+                GUILayout.BeginVertical();
+                playerName = GUILayout.TextField(playerName, 30, GUILayout.Width(280));
+                if (GUILayout.Button("Ready!"))
+                {
+                    PhotonNetwork.playerName = playerName;
+                    guistate = "connecting";
+                    PlayerPrefs.SetString("name", playerName);
+                    StartCoroutine("Connect");
+                }
+                GUILayout.EndVertical();
+                GUILayout.EndArea();
+                break;
             case "waitingtoreconnect":
                 GUILayout.Label("Attempting to connect in: " + (reconnectTime - Time.time));
                 break;
@@ -93,9 +156,9 @@ public class Manager : Photon.MonoBehaviour
                 {
                     settings = true;
                 }
-                if (GUILayout.Button("Menu"))
+                if (GUILayout.Button("Exit"))
                 {
-                    menu = true;
+                    Application.Quit();
                 }
                 GUILayout.EndVertical();
                 GUILayout.EndArea();
@@ -196,6 +259,12 @@ public class Manager : Photon.MonoBehaviour
     void OnPhotonPlayerDisconnected(PhotonPlayer player)
     {
         Message(player.name + " left.", null);
+    }
+
+    void SaveSettings()
+    {
+        PhotonNetwork.playerName = playerName;
+        PlayerPrefs.SetString("name", playerName);
     }
 
     GUIContent[] CreateList(RoomInfo[] rooms)
