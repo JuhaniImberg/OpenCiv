@@ -26,4 +26,7 @@ MonoBehaviour:
   - DestroyRpc
   - Message
   - Kick
+  - ReadyChange
+  - Ready
+  - Chunk
   DisableAutoOpenWizard: 0

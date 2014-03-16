@@ -6,6 +6,7 @@ public class Manager : Photon.MonoBehaviour
 {
     public float version = 1.0f;
     public string guistate = "name";
+    public int width = 100, height = 100;
     public bool menu = false, settings = false;
     public float presetResolution_width = 1280, presetResolution_height = 720;
     public GUISkin skin;
@@ -16,11 +17,19 @@ public class Manager : Photon.MonoBehaviour
     private string chatMessage = "";
     Stack<string> chatMessages;
     RoomInfo selectedRoom = null;
+    bool ready = false;
+    List<PhotonPlayer> readyPlayers = new List<PhotonPlayer>();
+    Tile[,] tiles;
+    Tile basicTile;
+    int pendingChunks = 0;
 
     void Start()
     {
         Application.runInBackground = true;
+        playerName = PlayerPrefs.GetString("name");
         chatMessages = new Stack<string>(Mathf.RoundToInt(360 / skin.customStyles[0].fontSize));
+        tiles = new Tile[width, height];
+        basicTile = ((GameObject)Resources.Load("tiles/basic")).GetComponent<Tile>();
     }
 
     void Update()
@@ -85,7 +94,7 @@ public class Manager : Photon.MonoBehaviour
         switch (guistate)
         {
             case "name":
-                GUI.Box(new Rect(500,250,280,80),"Enter your name");
+                GUI.Box(new Rect(500, 250, 280, 80), "Enter your name");
                 GUILayout.BeginArea(new Rect(500, 272, 280, 80));
                 GUILayout.BeginVertical();
                 playerName = GUILayout.TextField(playerName, 30, GUILayout.Width(280));
@@ -175,7 +184,7 @@ public class Manager : Photon.MonoBehaviour
                 foreach (PhotonPlayer player in PhotonNetwork.playerList)
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(player.name + (player.isMasterClient ? " (host)" : ""));
+                    GUILayout.Label(player.name + (readyPlayers.Contains(player) ? " (ready)" : "") + (player.isMasterClient ? " (host)" : ""));
                     if (PhotonNetwork.isMasterClient && player != PhotonNetwork.player)
                         if (GUILayout.Button(kickIcon, GUILayout.Width(30), GUILayout.Height(30)))
                             photonView.RPC("Kick", player);
@@ -185,6 +194,23 @@ public class Manager : Photon.MonoBehaviour
                 GUILayout.EndArea();
                 GUILayout.BeginVertical();
                 GUILayout.Box("", GUILayout.Width(380), GUILayout.Height(320));
+                GUILayout.BeginArea(new Rect(910, 0, 380, 320));
+                if (GUILayout.Button(ready?"Not ready":"Ready"))
+                {
+                    if (!ready)
+                    {
+                        photonView.RPC("ReadyChange", PhotonTargets.All);
+                        photonView.RPC("Message", PhotonTargets.All, "ready");
+                        ready = true;
+                    }
+                    else
+                    {
+                        photonView.RPC("ReadyChange", PhotonTargets.All);
+                        photonView.RPC("Message", PhotonTargets.All, "not ready");
+                        ready = false;
+                    }
+                }
+                GUILayout.EndArea();
                 GUILayout.Box("", GUILayout.Width(380), GUILayout.Height(360));
                 GUILayout.EndVertical();
                 GUILayout.BeginArea(new Rect(910, 330, 380, 360));
@@ -220,6 +246,9 @@ public class Manager : Photon.MonoBehaviour
                     }
                 }
                 GUILayout.EndArea();
+                break;
+            case "loading":
+                GUILayout.Box("Loading");
                 break;
         }
     }
@@ -291,5 +320,46 @@ public class Manager : Photon.MonoBehaviour
     {
         PhotonNetwork.LeaveRoom();
         guistate = "connected";
+    }
+
+    [RPC]
+    void ReadyChange(PhotonMessageInfo info)
+    {
+        if (readyPlayers.Contains(info.sender))
+            readyPlayers.Remove(info.sender);
+        else
+            readyPlayers.Add(info.sender);
+        if (PhotonNetwork.isMasterClient && readyPlayers.Count == PhotonNetwork.playerList.Length)
+        {
+            photonView.RPC("Ready", PhotonTargets.All, width*height/10);
+        }
+    }
+
+    [RPC]
+    void Ready(int chunkAmount)
+    {
+        pendingChunks = chunkAmount;
+        guistate = "loading";
+        if (PhotonNetwork.isMasterClient)
+            StartCoroutine("Generate");
+    }
+
+    IEnumerator Generate()
+    {
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                GameObject go = Instantiate(basicTile.gameObject, Vector3.zero + x * Vector3.forward + y * Vector3.right, Quaternion.identity) as GameObject;
+                tiles[x, y] = go.GetComponent<Tile>();
+            }
+            yield return null;
+        }
+    }
+
+    [RPC]
+    void Chunk()
+    {
+
     }
 }
